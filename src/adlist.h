@@ -40,15 +40,15 @@ typedef struct listNode {
 } listNode;
 
 typedef struct listIter {
-    listNode *next;
-    int direction;
+    listNode *next;   //下一个要迭代的节点
+    int direction;    //迭代的方向
 } listIter;
 
 typedef struct list {
     listNode *head;
     listNode *tail;
     void *(*dup)(void *ptr);
-    void (*free)(void *ptr);
+    void (*free)(void *ptr);  //释放listNode结构体中的value字段
     int (*match)(void *ptr, void *key);
     unsigned long len;
 } list;
@@ -88,8 +88,10 @@ void listRewindTail(list *list, listIter *li);
 void listRotate(list *list);
 void listJoin(list *l, list *o);
 
-/* Directions for iterators */
-#define AL_START_HEAD 0
+/* Directions for iterators 
+* 链表迭代方向0是从前往后遍历，1是从后往前遍历
+*/
+#define AL_START_HEAD 0  
 #define AL_START_TAIL 1
 
 #endif /* __ADLIST_H__ */

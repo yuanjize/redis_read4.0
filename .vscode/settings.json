@@ -1,0 +1,23 @@
+{
+    "files.associations": {
+        "types.h": "c",
+        "time.h": "c",
+        "stdint.h": "c",
+        "stdlib.h": "c",
+        "__functional_base": "c",
+        "__functional_base_03": "c",
+        "__hash_table": "c",
+        "__tuple": "c",
+        "array": "c",
+        "chrono": "c",
+        "type_traits": "c",
+        "functional": "c",
+        "limits": "c",
+        "memory": "c",
+        "random": "c",
+        "ratio": "c",
+        "tuple": "c",
+        "utility": "c",
+        "iterator": "c"
+    }
+}
