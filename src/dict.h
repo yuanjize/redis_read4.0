@@ -43,7 +43,7 @@
 
 /* Unused arguments generate annoying warnings... */
 #define DICT_NOTUSED(V) ((void) V)
-
+// key就是key,val有可能是一个联合：void* uint64_t,int64_t,double.还有一个指向下一个dictEntry的next字段。
 typedef struct dictEntry {
     void *key;
     union {
@@ -65,31 +65,35 @@ typedef struct dictType {
 } dictType;
 
 /* This is our hash table structure. Every dictionary has two of this as we
- * implement incremental rehashing, for the old to the new table. */
+ * implement incremental rehashing, for the old to the new table. 
+ * 这个是hash表结构，每个hash都会有两个dictht用来增量rehashing。
+ * */
 typedef struct dictht {
-    dictEntry **table;
-    unsigned long size;
-    unsigned long sizemask;
+    dictEntry **table;  //拉链法
+    unsigned long size; // 当前table的容量（bucket数量）
+    unsigned long sizemask;  //初始化的时候等于size-1
     unsigned long used;
 } dictht;
 
 typedef struct dict {
-    dictType *type;
+    dictType *type;   // 一些字典使用的函数
     void *privdata;
     dictht ht[2];
-    long rehashidx; /* rehashing not in progress if rehashidx == -1 */
-    unsigned long iterators; /* number of iterators currently running */
+    long rehashidx; /* rehashing进度 -1代表没有进行rehash，0代表刚要进行rehash，大于0代表hash到了第几个bucket。rehashing not in progress if rehashidx == -1 */
+    unsigned long iterators; /* 当前正在该hash上迭代的迭代器 number of iterators currently running */
 } dict;
 
 /* If safe is set to 1 this is a safe iterator, that means, you can call
  * dictAdd, dictFind, and other functions against the dictionary even while
  * iterating. Otherwise it is a non safe iterator, and only dictNext()
- * should be called while iterating. */
+ * should be called while iterating. 
+ * 字典迭代器 如果safe字段是1那么代表可以在该迭代器上一遍迭代一边修改。如果不是safe那么只能迭代。
+ * */
 typedef struct dictIterator {
     dict *d;
-    long index;
-    int table, safe;
-    dictEntry *entry, *nextEntry;
+    long index; //当前遍历的bucket索引
+    int table, safe;  //table是正待迭代的th
+    dictEntry *entry, *nextEntry; //entry是当前正在迭代的，nextEntry是下次要迭代的
     /* unsafe iterator fingerprint for misuse detection. */
     long long fingerprint;
 } dictIterator;
@@ -97,55 +101,57 @@ typedef struct dictIterator {
 typedef void (dictScanFunction)(void *privdata, const dictEntry *de);
 typedef void (dictScanBucketFunction)(void *privdata, dictEntry **bucketref);
 
-/* This is the initial size of every hash table */
+/*hash表初始化大小 This is the initial size of every hash table */
 #define DICT_HT_INITIAL_SIZE     4
 
 /* ------------------------------- Macros ------------------------------------*/
+/*下面两个函数设置联合中的val字段*/
+//d是dict结构体 调用析构函数清楚(entry)->v.val
 #define dictFreeVal(d, entry) \
     if ((d)->type->valDestructor) \
         (d)->type->valDestructor((d)->privdata, (entry)->v.val)
-
+//用valDup复制_val_并写入到(entry)->v.val中
 #define dictSetVal(d, entry, _val_) do { \
     if ((d)->type->valDup) \
         (entry)->v.val = (d)->type->valDup((d)->privdata, _val_); \
     else \
         (entry)->v.val = (_val_); \
 } while(0)
-
+/*设置联合中的s64（int64_t）字段*/
 #define dictSetSignedIntegerVal(entry, _val_) \
     do { (entry)->v.s64 = _val_; } while(0)
-
+/*设置联合中的u64（uint64_t）字段*/
 #define dictSetUnsignedIntegerVal(entry, _val_) \
     do { (entry)->v.u64 = _val_; } while(0)
-
+/*设置联合中的d（double）字段*/
 #define dictSetDoubleVal(entry, _val_) \
     do { (entry)->v.d = _val_; } while(0)
-
+/*使用keyDestructor析构key*/
 #define dictFreeKey(d, entry) \
     if ((d)->type->keyDestructor) \
         (d)->type->keyDestructor((d)->privdata, (entry)->key)
-
+/*使用keyDup复制key并赋值给entry*/
 #define dictSetKey(d, entry, _key_) do { \
     if ((d)->type->keyDup) \
         (entry)->key = (d)->type->keyDup((d)->privdata, _key_); \
     else \
         (entry)->key = (_key_); \
 } while(0)
-
+/*使用keyCompare来比较两个key是否一样*/
 #define dictCompareKeys(d, key1, key2) \
     (((d)->type->keyCompare) ? \
         (d)->type->keyCompare((d)->privdata, key1, key2) : \
         (key1) == (key2))
 
-#define dictHashKey(d, key) (d)->type->hashFunction(key)
-#define dictGetKey(he) ((he)->key)
-#define dictGetVal(he) ((he)->v.val)
-#define dictGetSignedIntegerVal(he) ((he)->v.s64)
-#define dictGetUnsignedIntegerVal(he) ((he)->v.u64)
-#define dictGetDoubleVal(he) ((he)->v.d)
-#define dictSlots(d) ((d)->ht[0].size+(d)->ht[1].size)
-#define dictSize(d) ((d)->ht[0].used+(d)->ht[1].used)
-#define dictIsRehashing(d) ((d)->rehashidx != -1)
+#define dictHashKey(d, key) (d)->type->hashFunction(key)  //对key进行hash
+#define dictGetKey(he) ((he)->key)                        //获取key
+#define dictGetVal(he) ((he)->v.val)                      //获取val
+#define dictGetSignedIntegerVal(he) ((he)->v.s64)         //获取s64
+#define dictGetUnsignedIntegerVal(he) ((he)->v.u64)       //获取u64
+#define dictGetDoubleVal(he) ((he)->v.d)                  //获取d
+#define dictSlots(d) ((d)->ht[0].size+(d)->ht[1].size)    //获取hash表的大小
+#define dictSize(d) ((d)->ht[0].used+(d)->ht[1].used)     //获取hash表的元素个数
+#define dictIsRehashing(d) ((d)->rehashidx != -1)         //判断是否正在进行rehash
 
 /* API */
 dict *dictCreate(dictType *type, void *privDataPtr);

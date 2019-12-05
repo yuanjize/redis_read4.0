@@ -18,6 +18,13 @@
         "ratio": "c",
         "tuple": "c",
         "utility": "c",
-        "iterator": "c"
+        "iterator": "c",
+        "redisassert.h": "c",
+        "fmacros.h": "c",
+        "limits.h": "c",
+        "dict.h": "c",
+        "zmalloc.h": "c",
+        "assert.h": "c",
+        "__locale": "c"
     }
 }

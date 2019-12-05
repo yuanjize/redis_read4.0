@@ -1,8 +1,5 @@
 Makefile
 Makefile.dep
-adlist.c
-adlist.h
-adlist.o
 ae.c
 ae.h
 ae.o
@@ -44,9 +41,6 @@ debug.o
 debugmacro.h
 defrag.c
 defrag.o
-dict.c
-dict.h
-dict.o
 dump.rdb
 endianconv.c
 endianconv.h
@@ -197,7 +191,40 @@ sds.c
 sds.h
 sds.o
 sdsalloc.h
-2.====
+2.==== finish
 adlist.c
 adlist.h
 adlist.o
+3.==== finish
+dict.c
+dict.h
+dict.o
+
+
+
+
+
+
+
+//=======
+如何根据key算index？
+h = dictHashKey(d, key);
+idx = h & d->ht[0/1].sizemask;
+he = d->ht[table].table[idx];
+
+//=======
+scan的时候索引为什么从高位开始加1？
+
+如果从低位开始+1
+   bucket size = 8； mask： 111
+        001  
+        010
+        011
+        100
+      10001
+   rehashing中：bucket size=16  mask： 1111
+        如果我遍历到了 10001 -> &1111=001 这样在访问10001这个key的时候又会访问一遍001这个key,因为rehash之后这两个key的一个bucket。
+
+如果从高位开始+1:
+      https://mp.weixin.qq.com/s/ufoLJiXE0wU4Bc7ZbE9cDQ
+      https://zhuanlan.zhihu.com/p/48989230
