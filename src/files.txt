@@ -199,7 +199,9 @@ adlist.o
 dict.c
 dict.h
 dict.o
-
+4.==== zskiplist
+server.h 一部分
+t_zset.c 一部分
 
 
 

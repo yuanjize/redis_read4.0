@@ -757,21 +757,21 @@ struct sharedObjectsStruct {
 
 /* ZSETs use a specialized version of Skiplists */
 typedef struct zskiplistNode {
-    sds ele;
-    double score;
-    struct zskiplistNode *backward;
-    struct zskiplistLevel {
-        struct zskiplistNode *forward;
-        unsigned int span;
+    sds ele;     // value
+    double score; //分数
+    struct zskiplistNode *backward; //前一个节点，只有第一层有
+    struct zskiplistLevel {         //每一次的前一个点
+        struct zskiplistNode *forward; // 后一个节点
+        unsigned int span;          // 每个后向指针还对应了一个span值，它表示当前的指针跨越了多少个节点
     } level[];
-} zskiplistNode;
+} zskiplistNode;                     // 跳跃链表节点
 
-typedef struct zskiplist {
-    struct zskiplistNode *header, *tail;
-    unsigned long length;
-    int level;
+typedef struct zskiplist {           // 跳跃链表
+    struct zskiplistNode *header, *tail; // 头指针，尾指针
+    unsigned long length;            //链表长度，不包括头尾指针
+    int level;                       //最大层级
 } zskiplist;
-
+// zast包括一个跳跃链表一个字典
 typedef struct zset {
     dict *dict;
     zskiplist *zsl;
